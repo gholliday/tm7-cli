@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <AssemblyName>tm7</AssemblyName>
+    <RootNamespace>Tm7.Cli</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <OptimizationPreference>Size</OptimizationPreference>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- AOT/trim warnings for DataContractSerializer are suppressed at the call site
+         in Tm7XmlSerializer.cs via UnconditionalSuppressMessage attributes.
+         Types are preserved via DynamicDependency attributes and TrimmerRoots.xml. -->
+    <!-- DataContractSerializer creates model objects without calling constructors,
+         so non-nullable properties may be uninitialized during deserialization.
+         These suppressions apply to the Tm7Model serialization classes. -->
+    <NoWarn>CS8618;CS8625;CS8600;CS8603</NoWarn>
+    <Company>gholliday</Company>
+    <Product>TM7 CLI</Product>
+    <Authors>gholliday</Authors>
+    <Description>A CLI tool for constructing, interrogating, and modifying Microsoft Threat Modeling Tool (.tm7) files.</Description>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>tm7</ToolCommandName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Hex1b" />
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="System.CommandLine" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
+  </ItemGroup>
+
+</Project>

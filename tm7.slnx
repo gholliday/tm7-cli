@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src\Tm7.Cli\Tm7.Cli.csproj" />
+  <Project Path="tests\Tm7.Tests\Tm7.Tests.csproj" />
+</Solution>

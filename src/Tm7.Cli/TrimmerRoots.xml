@@ -1,0 +1,72 @@
+<linker>
+  <!--
+    ILLink descriptor that preserves all types needed by DataContractSerializer
+    for TM7 file serialization. This ensures the NativeAOT compiler and IL trimmer
+    do not remove types, constructors, or members required for reflection-based
+    serialization of the ThreatModeling object model.
+  -->
+  <assembly fullname="tm7">
+    <!-- Core model -->
+    <type fullname="Tm7.Cli.Model.SerializableModelData" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableDrawingSurfaceModel" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableMetaInformation" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableNote" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableProfile" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableValidation" preserve="all" />
+
+    <!-- Taggable hierarchy (borders + lines) -->
+    <type fullname="Tm7.Cli.Model.SerializableTaggable" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableBorder" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencil" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencilEllipse" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencilParallelLines" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencilRectangle" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencilAnnotation" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableBorderBoundary" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableLine" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableConnector" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableLineBoundary" preserve="all" />
+
+    <!-- Display attributes (polymorphic via i:type in Properties lists) -->
+    <type fullname="Tm7.Cli.Model.SerializableDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableHeaderDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableBooleanDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStaticBooleanDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStringDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStaticStringDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableCustomStringDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableEnumerableDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStaticEnumerableDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableListDisplayAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStaticListDisplayAttribute" preserve="all" />
+
+    <!-- Knowledge base types -->
+    <type fullname="Tm7.Cli.Model.SerializableKnowledgeBase" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableElementType" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableKnowledgeBaseAttribute" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableManifest" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableThreatCategory" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableThreatType" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableExtendable" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableGenerationFilters" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStencilConstraint" preserve="all" />
+
+    <!-- Threat instances -->
+    <type fullname="Tm7.Cli.Model.SerializableThreat" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableThreatMetaData" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableThreatMetaDatum" preserve="all" />
+
+    <!-- CollectionDataContract wrappers -->
+    <type fullname="Tm7.Cli.Model.SerializableAttributeValues" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableAvailableToBaseModels" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableKbVersion" preserve="all" />
+
+    <!-- Enums used by DataContract members -->
+    <type fullname="Tm7.Cli.Model.AttributeType" preserve="all" />
+    <type fullname="Tm7.Cli.Model.AttributeInheritance" preserve="all" />
+    <type fullname="Tm7.Cli.Model.AttributeMode" preserve="all" />
+    <type fullname="Tm7.Cli.Model.ThreatState" preserve="all" />
+    <type fullname="Tm7.Cli.Model.StencilConnectionPort" preserve="all" />
+    <type fullname="Tm7.Cli.Model.ElementVisualRepresentation" preserve="all" />
+  </assembly>
+</linker>
