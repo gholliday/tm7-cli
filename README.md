@@ -17,15 +17,15 @@ Requires [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 ```bash
 # Clone and build
 git clone <repo-url>
-cd tm7cli
+cd tm7-cli
 dotnet build
 
 # Run directly
 dotnet run --project src/Tm7.Cli -- <command>
 
-# Or install as a global tool
+# Or install as a global tool (prerelease versions need --version)
 dotnet pack
-dotnet tool install --global --add-source artifacts/package/release tm7
+dotnet tool install --global --add-source artifacts/package/release tm7 --version "0.0.1-pre.1.dev.1"
 tm7 --help
 ```
 
