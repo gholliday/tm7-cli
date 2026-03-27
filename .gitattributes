@@ -1,0 +1,3 @@
+# Treat .tm7 files as binary to preserve exact byte content across platforms.
+# These are XML files serialized by DataContractSerializer and must round-trip exactly.
+*.tm7 binary
