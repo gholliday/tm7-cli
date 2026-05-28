@@ -37,8 +37,8 @@ tm7 open model.tm7
 tm7 list entities model.tm7
 tm7 list flows model.tm7
 
-# Create a new model from the included template
-tm7 new mymodel.tm7 --template samples/template.tm7 --name "My Threat Model"
+# Create a new model from the bundled Azure template (use --template to override)
+tm7 new mymodel.tm7 --name "My Threat Model"
 
 # Add entities
 tm7 add entity mymodel.tm7 \
@@ -56,8 +56,8 @@ tm7 add flow mymodel.tm7 \
 # Render the diagram in terminal
 tm7 render mymodel.tm7
 
-# Import from Graphviz DOT
-tm7 import dot architecture.dot --output model.tm7 --template samples/template.tm7
+# Import from Graphviz DOT (uses the bundled template by default)
+tm7 import dot architecture.dot --output model.tm7
 
 # Show all usage examples
 tm7 examples

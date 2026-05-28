@@ -41,4 +41,14 @@
     <TrimmerRootDescriptor Include="TrimmerRoots.xml" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Bundled default template (Azure Threat Model Template KB).
+         Used by `tm7 new` and `tm7 import dot` when the template option is not specified. -->
+    <EmbeddedResource Include="..\..\samples\template.tm7" LogicalName="Tm7.Cli.Resources.DefaultTemplate.tm7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Tm7.Tests" />
+  </ItemGroup>
+
 </Project>

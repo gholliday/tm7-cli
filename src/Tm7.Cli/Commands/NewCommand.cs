@@ -9,7 +9,7 @@ internal static class NewCommand
     internal static Command Create()
     {
         var fileArg = new Argument<FileInfo>("file") { Description = "Path to the new .tm7 file." };
-        var templateOpt = new Option<FileInfo>("--template") { Description = "Path to a template .tm7 file.", Required = true };
+        var templateOpt = new Option<FileInfo?>("--template") { Description = "Path to a template .tm7 file. If omitted, the bundled Azure Threat Model template is used." };
         var nameOpt = new Option<string>("--name") { Description = "Model name.", DefaultValueFactory = _ => "New Threat Model" };
 
         var cmd = new Command("new", "Create a new model from a template.") { fileArg, templateOpt, nameOpt };
@@ -17,10 +17,16 @@ internal static class NewCommand
         cmd.SetAction(parseResult =>
         {
             var file = parseResult.GetValue(fileArg)!;
-            var templateFile = parseResult.GetValue(templateOpt)!;
+            var templateFile = parseResult.GetValue(templateOpt);
             var modelName = parseResult.GetValue(nameOpt)!;
 
-            var template = Tm7File.Load(templateFile.FullName);
+            var template = templateFile is null
+                ? Tm7File.LoadDefaultTemplate()
+                : Tm7File.Load(templateFile.FullName);
+            var kbName = template.KnowledgeBase.Manifest?.Name;
+            var templateLabel = templateFile is null
+                ? (string.IsNullOrEmpty(kbName) ? "bundled default template" : $"bundled default template: {kbName}")
+                : templateFile.Name;
 
             var emptySurface = new SerializableDrawingSurfaceModel(
                 Guid.NewGuid(), "", "", Array.Empty<SerializableDisplayAttribute>(),
@@ -41,7 +47,7 @@ internal static class NewCommand
                 template.Profile ?? new SerializableProfile());
 
             Tm7File.Save(newModel, file.FullName);
-            AnsiConsole.MarkupLine($"[green]Created[/] {Markup.Escape(file.FullName)} [dim](from {Markup.Escape(templateFile.Name)})[/]");
+            AnsiConsole.MarkupLine($"[green]Created[/] {Markup.Escape(file.FullName)} [dim](from {Markup.Escape(templateLabel)})[/]");
         });
         return cmd;
     }

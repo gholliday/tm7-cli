@@ -165,4 +165,94 @@ public class AotExeIntegrationTests
             File.Delete(work);
         }
     }
+
+    [Fact]
+    public void AotExe_NewWithoutTemplate_UsesBundledAzureKb()
+    {
+        // Guards the riskiest path of the embedded-default-template change: the
+        // published NativeAOT exe must be able to read the EmbeddedResource via
+        // Assembly.GetManifestResourceStream and deserialize it through the
+        // reflection-based DataContractSerializer path.
+        var exe = AotExePath();
+        Assert.SkipUnless(exe is not null, "AOT publish output not present; run `dotnet publish src/Tm7.Cli -c Release -r win-x64` first.");
+
+        var work = Path.Combine(Path.GetTempPath(), $"tm7-aot-newdef-{Guid.NewGuid():N}.tm7");
+        try
+        {
+            var (code, stdout, stderr) = Run(exe!, "new", work, "--name", "AotDefaultTemplate");
+            Assert.True(code == 0, $"new exit={code} stderr={stderr}");
+            Assert.Contains("bundled default template", stdout);
+
+            var reloaded = Tm7File.Load(work);
+            Assert.Equal("AotDefaultTemplate", reloaded.MetaInformation.ThreatModelName);
+            Assert.NotNull(reloaded.KnowledgeBase);
+            Assert.NotNull(reloaded.KnowledgeBase.Manifest);
+            Assert.Equal("Azure Threat Model Template", reloaded.KnowledgeBase.Manifest.Name);
+            Assert.Single(reloaded.DrawingSurfaceList);
+        }
+        finally
+        {
+            if (File.Exists(work)) File.Delete(work);
+        }
+    }
+
+    [Fact]
+    public void AotExe_ImportDotWithoutTemplate_EmbedsAzureKbAndResolvesAllTypeIds()
+    {
+        // Two guarantees:
+        //   1. AOT can load + serialize the embedded default template via `import dot`.
+        //   2. Every TypeId emitted by the importer/mapper for a realistic input is
+        //      defined by the bundled KB — i.e. opening the file in TMT will not
+        //      trigger the "Unable to resolve a type" downgrade dialog.
+        var exe = AotExePath();
+        Assert.SkipUnless(exe is not null, "AOT publish output not present; run `dotnet publish src/Tm7.Cli -c Release -r win-x64` first.");
+
+        var dotPath = Path.Combine(Path.GetTempPath(), $"tm7-aot-import-{Guid.NewGuid():N}.dot");
+        var outPath = Path.Combine(Path.GetTempPath(), $"tm7-aot-import-{Guid.NewGuid():N}.tm7");
+        // Inputs chosen so the mapper produces a representative mix of Azure TypeIds:
+        // trust boundary, web app, key vault, browser external interactor, and
+        // bidirectional flows (forward + reverse).
+        File.WriteAllText(dotPath, """
+            digraph G {
+              user [label="Browser"];
+              api [label="Web App"];
+              kv  [label="Key Vault"];
+              subgraph cluster_az { label="Azure Subscription"; api; kv; }
+              user -> api [dir=both, label="HTTPS"];
+              api -> kv [label="Get secret"];
+            }
+            """);
+        try
+        {
+            var (code, stdout, stderr) = Run(exe!, "import", "dot", dotPath, "--output", outPath);
+            Assert.True(code == 0, $"import exit={code} stdout={stdout} stderr={stderr}");
+            Assert.Contains("bundled default template", stdout);
+
+            var reloaded = Tm7File.Load(outPath);
+            Assert.NotNull(reloaded.KnowledgeBase);
+            Assert.Equal("Azure Threat Model Template", reloaded.KnowledgeBase.Manifest.Name);
+
+            // Every TypeId actually written into the diagram must resolve to a stencil
+            // defined in the embedded KB — otherwise TMT would downgrade the shape.
+            var defined = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var el in reloaded.KnowledgeBase.StandardElements) defined.Add(el.Id);
+            foreach (var el in reloaded.KnowledgeBase.GenericElements) defined.Add(el.Id);
+
+            var surface = reloaded.DrawingSurfaceList[0];
+            var emittedTypeIds = surface.Borders.Values.OfType<SerializableTaggable>()
+                .Concat(surface.Lines.Values.OfType<SerializableTaggable>())
+                .SelectMany(t => new[] { t.TypeId, t.GenericTypeId })
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+            Assert.NotEmpty(emittedTypeIds);
+            var unresolved = emittedTypeIds.Where(id => !defined.Contains(id)).OrderBy(s => s).ToList();
+            Assert.True(unresolved.Count == 0,
+                $"Imported model uses TypeIds the bundled KB does not define: {string.Join(", ", unresolved)}.");
+        }
+        finally
+        {
+            if (File.Exists(dotPath)) File.Delete(dotPath);
+            if (File.Exists(outPath)) File.Delete(outPath);
+        }
+    }
 }
