@@ -26,10 +26,10 @@ public abstract class SerializableLine : SerializableTaggable
     [DataMember(Name = "SourceY")]
     public int Y0 { get; private set; }
 
-    [DataMember(Name = "StrokeDashArray", EmitDefaultValue = false)]
+    [DataMember(Name = "StrokeDashArray")]
     public string StrokeDashArray { get; private set; }
 
-    [DataMember(Name = "StrokeThickness", EmitDefaultValue = false)]
+    [DataMember(Name = "StrokeThickness")]
     public double StrokeThickness { get; private set; }
 
     [DataMember(Name = "TargetGuid")]

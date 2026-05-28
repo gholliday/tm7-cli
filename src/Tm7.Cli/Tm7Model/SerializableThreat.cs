@@ -29,8 +29,12 @@ public class SerializableThreat
     [DataMember(Name = "Priority")]
     public string Priority { get; private set; }
 
-    [DataMember(Name = "Properties")]
+    // Public Dictionary preserved; DCS-visible backing list bypasses internal KeyValue<,>.
+    [IgnoreDataMember]
     public Dictionary<string, string> Properties { get; set; }
+
+    [DataMember(Name = "Properties")]
+    private SerializableStringStringKvpList _propertiesList = new();
 
     [DataMember(Name = "SourceGuid")]
     public Guid SourceGuid { get; private set; }
@@ -84,5 +88,24 @@ public class SerializableThreat
         ModifiedAt = modifiedAt;
         Upgraded = upgraded;
         Properties = properties;
+    }
+
+    [OnSerializing]
+    private void OnSerializingDictionaries(StreamingContext context)
+    {
+        _propertiesList = Properties is null
+            ? new SerializableStringStringKvpList()
+            : new SerializableStringStringKvpList(
+                Properties.Select(kvp => new SerializableStringStringKvp { Key = kvp.Key, Value = kvp.Value }));
+    }
+
+    [OnDeserialized]
+    private void OnDeserializedDictionaries(StreamingContext context)
+    {
+        Properties = _propertiesList is null
+            ? new Dictionary<string, string>()
+            : _propertiesList
+                .Where(e => e.Key is not null && e.Value is not null)
+                .ToDictionary(e => e.Key!, e => e.Value!);
     }
 }

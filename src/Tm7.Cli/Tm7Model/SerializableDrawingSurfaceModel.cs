@@ -5,16 +5,28 @@ namespace Tm7.Cli.Model;
 [DataContract(Name = "DrawingSurfaceModel", IsReference = true, Namespace = "http://schemas.datacontract.org/2004/07/ThreatModeling.Model")]
 public class SerializableDrawingSurfaceModel : SerializableTaggable
 {
+    // The public API stays as Dictionary<Guid, object> so consumers (renderer, commands, tests)
+    // are unaffected. DCS serialization is redirected to private list fields via
+    // [IgnoreDataMember] + [DataMember] + [OnSerializing]/[OnDeserialized] callbacks.
+    // This is required because DCS's reflection-based reader on NativeAOT cannot
+    // instantiate the internal System.Runtime.Serialization.KeyValue<Guid,object>
+    // closed generic that backs CollectionDataContract for IDictionary<,>.
+    [IgnoreDataMember]
+    public Dictionary<Guid, object> Borders { get; set; } = new();
+
     [DataMember(Name = "Borders")]
-    public Dictionary<Guid, object> Borders { get; private set; }
+    private SerializableGuidObjectKvpList _bordersList = new();
 
     [DataMember(Name = "Header")]
     public string Header { get; private set; }
 
-    [DataMember(Name = "Lines")]
-    public Dictionary<Guid, object> Lines { get; private set; }
+    [IgnoreDataMember]
+    public Dictionary<Guid, object> Lines { get; set; } = new();
 
-    [DataMember(Name = "Zoom", EmitDefaultValue = false)]
+    [DataMember(Name = "Lines")]
+    private SerializableGuidObjectKvpList _linesList = new();
+
+    [DataMember(Name = "Zoom")]
     public double Zoom { get; private set; }
 
     public SerializableDrawingSurfaceModel(Guid guid, string typeId, string genericTypeId,
@@ -28,5 +40,29 @@ public class SerializableDrawingSurfaceModel : SerializableTaggable
         Lines = lines.ToDictionary(l => l.Guid, l => (object)l);
         Zoom = zoom;
         Header = header;
+    }
+
+    [OnSerializing]
+    private void OnSerializingDictionaries(StreamingContext context)
+    {
+        _bordersList = Borders is null
+            ? new SerializableGuidObjectKvpList()
+            : new SerializableGuidObjectKvpList(
+                Borders.Select(kvp => new SerializableGuidObjectKvp { Key = kvp.Key, Value = kvp.Value }));
+        _linesList = Lines is null
+            ? new SerializableGuidObjectKvpList()
+            : new SerializableGuidObjectKvpList(
+                Lines.Select(kvp => new SerializableGuidObjectKvp { Key = kvp.Key, Value = kvp.Value }));
+    }
+
+    [OnDeserialized]
+    private void OnDeserializedDictionaries(StreamingContext context)
+    {
+        Borders = _bordersList is null
+            ? new Dictionary<Guid, object>()
+            : _bordersList.Where(e => e.Value is not null).ToDictionary(e => e.Key, e => e.Value!);
+        Lines = _linesList is null
+            ? new Dictionary<Guid, object>()
+            : _linesList.Where(e => e.Value is not null).ToDictionary(e => e.Key, e => e.Value!);
     }
 }
