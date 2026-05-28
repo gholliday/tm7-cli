@@ -14,11 +14,16 @@ public class SerializableModelData
     [DataMember(Name = "Notes", Order = 4)]
     public List<SerializableNote> Notes { get; private set; }
 
+    // The public API keeps Dictionary<string, SerializableThreat>; DCS sees the
+    // private backing list instead so AOT can fully analyze the type graph.
+    [IgnoreDataMember]
+    public Dictionary<string, SerializableThreat> AllThreatsDictionary { get; set; }
+
     [DataMember(Name = "ThreatInstances", Order = 5)]
-    public Dictionary<string, SerializableThreat> AllThreatsDictionary { get; private set; }
+    private SerializableStringThreatKvpList _threatInstancesList = new();
 
     [DataMember(Name = "ThreatGenerationEnabled", Order = 6)]
-    public bool? ThreatGenerationEnabled { get; private set; }
+    public bool ThreatGenerationEnabled { get; private set; }
 
     [DataMember(Name = "Validations", Order = 7)]
     public List<SerializableValidation> Validations { get; private set; }
@@ -47,11 +52,30 @@ public class SerializableModelData
         MetaInformation = metaInformation;
         Notes = notes.ToList();
         AllThreatsDictionary = allThreatsDictionary;
-        ThreatGenerationEnabled = threatGenerationEnabled;
+        ThreatGenerationEnabled = threatGenerationEnabled ?? false;
         Validations = validations.ToList();
         Version = version ?? "4.3";
         KnowledgeBase = knowledgeBase;
         Profile = profile;
+    }
+
+    [OnSerializing]
+    private void OnSerializingDictionaries(StreamingContext context)
+    {
+        _threatInstancesList = AllThreatsDictionary is null
+            ? new SerializableStringThreatKvpList()
+            : new SerializableStringThreatKvpList(
+                AllThreatsDictionary.Select(kvp => new SerializableStringThreatKvp { Key = kvp.Key, Value = kvp.Value }));
+    }
+
+    [OnDeserialized]
+    private void OnDeserializedDictionaries(StreamingContext context)
+    {
+        AllThreatsDictionary = _threatInstancesList is null
+            ? new Dictionary<string, SerializableThreat>()
+            : _threatInstancesList
+                .Where(e => e.Key is not null && e.Value is not null)
+                .ToDictionary(e => e.Key!, e => e.Value!);
     }
 
 }

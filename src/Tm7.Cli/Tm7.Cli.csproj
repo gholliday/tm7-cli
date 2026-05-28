@@ -17,6 +17,12 @@
          so non-nullable properties may be uninitialized during deserialization.
          These suppressions apply to the Tm7Model serialization classes. -->
     <NoWarn>CS8618;CS8625;CS8600;CS8603</NoWarn>
+    <!-- DCS itself triggers IL3050 warnings inside System.Private.DataContractSerialization
+         and ilc rolls them up into IL3053. We can't fix those from outside, but we want
+         them visible (not silently suppressed) so future regressions in our own code remain
+         catchable; just don't fail the build on them. Our DCS call sites carry targeted
+         UnconditionalSuppressMessage attributes for IL2026/IL3050. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);IL3050;IL3053</WarningsNotAsErrors>
     <Company>gholliday</Company>
     <Product>TM7 CLI</Product>
     <Authors>gholliday</Authors>

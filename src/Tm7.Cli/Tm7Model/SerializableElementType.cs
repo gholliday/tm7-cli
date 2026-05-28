@@ -47,10 +47,10 @@ public class SerializableElementType : SerializableExtendable
     [DataMember(Name = "StencilConstraints")]
     public List<SerializableStencilConstraint> StencilConstraints { get; private set; }
 
-    [DataMember(Name = "StrokeDashArray", EmitDefaultValue = false)]
+    [DataMember(Name = "StrokeDashArray")]
     public string StrokeDashArray { get; private set; }
 
-    [DataMember(Name = "StrokeThickness", EmitDefaultValue = false)]
+    [DataMember(Name = "StrokeThickness")]
     public double StrokeThickness { get; private set; }
 
     public SerializableElementType(bool isExtendable, string name, string id, string description,

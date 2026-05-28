@@ -13,6 +13,17 @@ namespace Tm7.Cli;
 /// </summary>
 public static class Tm7XmlSerializer
 {
+    // Force AOT to keep concrete instantiations of Dictionary<,> and its EqualityComparer<>
+    // dependencies that DataContractSerializer's reflection reader will demand via ISerializable.
+    private static readonly object?[] _aotKeepAlive =
+    [
+        EqualityComparer<Guid>.Default,
+        EqualityComparer<string>.Default,
+        new Dictionary<Guid, object>(),
+        new Dictionary<string, SerializableThreat>(),
+        new Dictionary<string, string>(),
+    ];
+
     private static readonly Type[] KnownTypes =
     [
         typeof(List<SerializableDrawingSurfaceModel>),
@@ -94,6 +105,25 @@ public static class Tm7XmlSerializer
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableAttributeValues))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableAvailableToBaseModels))]
     [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableKbVersion))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableGuidObjectKvp))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableGuidObjectKvpList))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableStringThreatKvp))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableStringThreatKvpList))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableStringStringKvp))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(SerializableStringStringKvpList))]
+    // The serializable model classes no longer expose Dictionary<,> as [DataMember];
+    // those properties are [IgnoreDataMember] and backed by [DataMember] List<Kvp> fields
+    // (see SerializableKvpTypes.cs) so DCS never instantiates the BCL-internal
+    // System.Runtime.Serialization.KeyValue<K,V> closed generics that AOT cannot generate
+    // code for. The Dictionary<,> / EqualityComparer<,> preservation below is defensive:
+    // if a future change re-introduces a [DataMember] Dictionary<,>, DCS will fall back
+    // to the ISerializable path and require Dictionary<,>.(SerializationInfo,
+    // StreamingContext) + the relevant EqualityComparer<T> to exist at runtime.
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Dictionary<Guid, object>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Dictionary<string, SerializableThreat>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(Dictionary<string, string>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(EqualityComparer<Guid>))]
+    [DynamicDependency(DynamicallyAccessedMemberTypes.All, typeof(EqualityComparer<string>))]
     private static DataContractSerializer CreateSerializer()
     {
         return new DataContractSerializer(typeof(SerializableModelData), KnownTypes);

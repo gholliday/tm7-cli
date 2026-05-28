@@ -61,6 +61,14 @@
     <type fullname="Tm7.Cli.Model.SerializableAvailableToBaseModels" preserve="all" />
     <type fullname="Tm7.Cli.Model.SerializableKbVersion" preserve="all" />
 
+    <!-- Custom KVP wrapper types replacing DCS's internal KeyValue<,> for AOT compat -->
+    <type fullname="Tm7.Cli.Model.SerializableGuidObjectKvp" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableGuidObjectKvpList" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStringThreatKvp" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStringThreatKvpList" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStringStringKvp" preserve="all" />
+    <type fullname="Tm7.Cli.Model.SerializableStringStringKvpList" preserve="all" />
+
     <!-- Enums used by DataContract members -->
     <type fullname="Tm7.Cli.Model.AttributeType" preserve="all" />
     <type fullname="Tm7.Cli.Model.AttributeInheritance" preserve="all" />
@@ -68,5 +76,21 @@
     <type fullname="Tm7.Cli.Model.ThreatState" preserve="all" />
     <type fullname="Tm7.Cli.Model.StencilConnectionPort" preserve="all" />
     <type fullname="Tm7.Cli.Model.ElementVisualRepresentation" preserve="all" />
+  </assembly>
+
+  <!--
+    Defensive preservation of Dictionary<,> and EqualityComparer<,>: the model classes
+    no longer expose Dictionary<,> as [DataMember] (they use [IgnoreDataMember] + a
+    List<Kvp> backing field — see SerializableKvpTypes.cs and OnSerializing callbacks),
+    so DCS will not normally walk these types. Kept as a safety net in case a future
+    [DataMember] Dictionary<,> regression sends DCS down the ISerializable fallback.
+  -->
+  <assembly fullname="System.Private.CoreLib">
+    <type fullname="System.Collections.Generic.Dictionary`2" preserve="all" />
+    <type fullname="System.Collections.Generic.EqualityComparer`1" preserve="all" />
+    <type fullname="System.Collections.Generic.GenericEqualityComparer`1" preserve="all" />
+    <type fullname="System.Collections.Generic.ObjectEqualityComparer`1" preserve="all" />
+    <type fullname="System.Collections.Generic.NonRandomizedStringEqualityComparer" preserve="all" />
+    <type fullname="System.Collections.Generic.KeyValuePair`2" preserve="all" />
   </assembly>
 </linker>

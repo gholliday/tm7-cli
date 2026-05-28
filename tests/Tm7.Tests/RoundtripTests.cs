@@ -18,20 +18,37 @@ public class RoundtripTests
         Tm7File.Load(GetSamplePath("template.tm7"));
 
     [Fact]
-    public void RoundTrip_ByteForByte()
+    public void RoundTrip_StructuralEquivalence()
     {
         var path = GetSamplePath("template.tm7");
-        var originalBytes = File.ReadAllBytes(path);
 
-        var model = Tm7File.Load(path);
+        var original = Tm7File.Load(path);
 
         using var ms = new MemoryStream();
-        Tm7XmlSerializer.Serialize(ms, model);
-        var roundTrippedBytes = ms.ToArray();
+        Tm7XmlSerializer.Serialize(ms, original);
+        ms.Position = 0;
+        var roundTripped = Tm7XmlSerializer.Deserialize(ms);
 
-        Assert.Equal(originalBytes.Length, roundTrippedBytes.Length);
-        Assert.True(originalBytes.AsSpan().SequenceEqual(roundTrippedBytes),
-            "Round-tripped bytes do not match the original file");
+        // EmitDefaultValue=false was removed for NativeAOT compatibility (the underlying
+        // XmlObjectSerializerWriteContext.GetDefaultValue<T>() requires MakeGenericMethod),
+        // so the wire bytes are no longer identical. Verify the model structure round-trips.
+        Assert.Equal(original.Version, roundTripped.Version);
+        Assert.Equal(original.DrawingSurfaceList.Count, roundTripped.DrawingSurfaceList.Count);
+        for (int i = 0; i < original.DrawingSurfaceList.Count; i++)
+        {
+            var a = original.DrawingSurfaceList[i];
+            var b = roundTripped.DrawingSurfaceList[i];
+            Assert.Equal(a.Header, b.Header);
+            Assert.Equal(a.Borders.Count, b.Borders.Count);
+            Assert.Equal(a.Lines.Count, b.Lines.Count);
+            foreach (var key in a.Borders.Keys)
+                Assert.True(b.Borders.ContainsKey(key), $"Missing border {key} in surface {i}");
+            foreach (var key in a.Lines.Keys)
+                Assert.True(b.Lines.ContainsKey(key), $"Missing line {key} in surface {i}");
+        }
+        Assert.Equal(original.AllThreatsDictionary.Count, roundTripped.AllThreatsDictionary.Count);
+        Assert.Equal(original.MetaInformation.ThreatModelName, roundTripped.MetaInformation.ThreatModelName);
+        Assert.Equal(original.KnowledgeBase.Manifest.Name, roundTripped.KnowledgeBase.Manifest.Name);
     }
 
     [Fact]
