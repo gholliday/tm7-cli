@@ -12,6 +12,34 @@ A command-line tool for constructing, interrogating, and modifying Microsoft Thr
 
 ## Install
 
+### Download a prebuilt binary (recommended)
+
+Self-contained, single-file NativeAOT binaries are published for every release —
+no .NET runtime required. Download the archive for your platform from the
+[latest release](https://github.com/gholliday/tm7-cli/releases/latest):
+
+| Platform | Asset |
+| --- | --- |
+| Windows x64 | `tm7-win-x64.zip` |
+| Windows arm64 | `tm7-win-arm64.zip` |
+| Linux x64 | `tm7-linux-x64.tar.gz` |
+| Linux arm64 | `tm7-linux-arm64.tar.gz` |
+| macOS x64 (Intel) | `tm7-osx-x64.tar.gz` |
+| macOS arm64 (Apple Silicon) | `tm7-osx-arm64.tar.gz` |
+
+Each release also includes `checksums.txt` (SHA-256) and `release-metadata.json`
+for verification.
+
+> **Platform notes**
+> - **Linux** binaries are built against glibc 2.39 (Ubuntu 24.04), so they require
+>   a glibc-based distro of that vintage or newer (e.g. Ubuntu 24.04+, Debian 13+,
+>   RHEL/Rocky 10+, Fedora 40+). They are not built for musl/Alpine.
+> - **macOS** binaries are not code-signed or notarized. If you download via a
+>   browser, Gatekeeper quarantines the file; clear it with
+>   `xattr -d com.apple.quarantine ./tm7` (downloading with `curl`, as above, avoids this).
+
+### Build from source
+
 Requires [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0).
 
 ```bash
@@ -108,3 +136,32 @@ Options: `--width`, `--height`, `--plain` (no ANSI codes, for piping/AI consumpt
 - **Serialization**: Uses `DataContractSerializer` with an explicit known-types list — this is the only reliable way to produce valid `.tm7` files
 - **DTOs**: The `Tm7Model/` directory contains DataContract DTO classes derived from the public `.tm7` XML format. They use explicit `[DataContract(Namespace = "...")]` attributes to match the XML namespaces that `DataContractSerializer` expects.
 - **Rendering**: Uses [Hex1b](https://github.com/mitchdenny/hex1b) `Surface` as a character-cell canvas, with custom ANSI output to handle the unwritten-cell marker (`\uE000`)
+
+## Releasing
+
+Releases are produced by the [`Release` workflow](.github/workflows/release.yml),
+which builds self-contained NativeAOT binaries for all six supported runtime
+identifiers (`win-x64`, `win-arm64`, `linux-x64`, `linux-arm64`, `osx-x64`,
+`osx-arm64`) on native runners, smoke-tests each binary, and publishes a GitHub
+Release with the archives plus `checksums.txt` and `release-metadata.json`.
+
+The easiest way to cut one is the helper script — it computes the next version,
+shows you the plan, and pushes the tag after you confirm:
+
+```pwsh
+./scripts/release.ps1            # next patch  (v0.3.1 -> v0.3.2)
+./scripts/release.ps1 -Minor     # next minor  (v0.3.1 -> v0.4.0)
+./scripts/release.ps1 -Major     # next major  (v0.3.1 -> 1.0.0)
+./scripts/release.ps1 0.5.0      # an explicit version
+./scripts/release.ps1 -WhatIf    # preview without tagging anything
+```
+
+Under the hood this just creates and pushes a version tag, so you can also do it
+by hand (`git tag v0.1.0 && git push origin v0.1.0`) or run the workflow manually
+from the **Actions** tab (on the `main` branch) and supply the version. The version
+baked into the binaries comes from the tag (the leading `v` is stripped); pre-release
+tags such as `v0.1.0-rc.1` are published as GitHub pre-releases.
+
+If a build leg fails, the tag exists but no Release is published — fix the cause
+and use **Actions → the failed run → Re-run failed jobs**. Re-running is
+idempotent: the release job updates the existing tag's assets and metadata in place.

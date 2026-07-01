@@ -27,6 +27,7 @@
     <Product>TM7 CLI</Product>
     <Authors>gholliday</Authors>
     <Description>A CLI tool for constructing, interrogating, and modifying Microsoft Threat Modeling Tool (.tm7) files.</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>tm7</ToolCommandName>
   </PropertyGroup>
