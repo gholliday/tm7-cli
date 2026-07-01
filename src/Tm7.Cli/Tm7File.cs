@@ -1,3 +1,4 @@
+using System.Reflection;
 using Tm7.Cli.Model;
 
 namespace Tm7.Cli;
@@ -7,6 +8,8 @@ namespace Tm7.Cli;
 /// </summary>
 public static class Tm7File
 {
+    private const string DefaultTemplateResourceName = "Tm7.Cli.Resources.DefaultTemplate.tm7";
+
     /// <summary>
     /// Loads a .tm7 threat model from the specified file path.
     /// </summary>
@@ -16,6 +19,19 @@ public static class Tm7File
     {
         using var fs = File.OpenRead(path);
         return Tm7XmlSerializer.Deserialize(fs);
+    }
+
+    /// <summary>
+    /// Loads the default template (Azure Threat Model Template KB) bundled with the tool.
+    /// Used by <c>tm7 new</c> and <c>tm7 import dot</c> when no <c>--template</c> is supplied.
+    /// </summary>
+    public static SerializableModelData LoadDefaultTemplate()
+    {
+        var asm = typeof(Tm7File).Assembly;
+        using var stream = asm.GetManifestResourceStream(DefaultTemplateResourceName)
+            ?? throw new InvalidOperationException(
+                $"Embedded resource '{DefaultTemplateResourceName}' not found in assembly '{asm.FullName}'.");
+        return Tm7XmlSerializer.Deserialize(stream);
     }
 
     /// <summary>

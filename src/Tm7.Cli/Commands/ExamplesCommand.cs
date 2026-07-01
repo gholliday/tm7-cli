@@ -20,7 +20,8 @@ internal static class ExamplesCommand
                 "tm7 list flows model.tm7");
 
             WriteSection("Create a new model from template",
-                "tm7 new empty.tm7 --template threatmodelsample.tm7 --name \"My Threat Model\"");
+                "tm7 new empty.tm7 --name \"My Threat Model\"",
+                "tm7 new empty.tm7 --template custom-template.tm7 --name \"My Threat Model\"");
 
             WriteSection("Add entities",
                 "tm7 add entity model.tm7 --name \"Web API\" --type-id SE.P.TMCore.AzureAppServiceWebApp --generic-type-id GE.P --left 400 --top 200",
@@ -37,7 +38,8 @@ internal static class ExamplesCommand
                 "tm7 remove flow model.tm7 --guid <flow-guid>");
 
             WriteSection("Import from Graphviz DOT",
-                "tm7 import dot architecture.dot --output model.tm7 --template threatmodelsample.tm7");
+                "tm7 import dot architecture.dot --output model.tm7",
+                "tm7 import dot architecture.dot --output model.tm7 --template custom-template.tm7");
 
             WriteSection("Render diagram in the terminal",
                 "tm7 render model.tm7",
@@ -63,7 +65,7 @@ internal static class ExamplesCommand
 
             AnsiConsole.Write(new Rule("[dim]Workflow: build a model from scratch[/]").LeftJustified());
             AnsiConsole.WriteLine();
-            AnsiConsole.MarkupLine("[dim]1.[/] tm7 new model.tm7 --template threatmodelsample.tm7 --name \"My App\"");
+            AnsiConsole.MarkupLine("[dim]1.[/] tm7 new model.tm7 --name \"My App\"");
             AnsiConsole.MarkupLine("[dim]2.[/] tm7 add entity model.tm7 --name \"User\" --type-id GE.EI --generic-type-id GE.EI --left 50 --top 200");
             AnsiConsole.MarkupLine("[dim]3.[/] tm7 add entity model.tm7 --name \"API\" --type-id GE.P --generic-type-id GE.P --left 400 --top 200");
             AnsiConsole.MarkupLine("[dim]4.[/] tm7 list entities model.tm7  [dim]# get GUIDs[/]");

@@ -7,6 +7,13 @@ namespace Tm7.Cli.Commands;
 
 internal static class ImportCommand
 {
+    // Flow TypeIds emitted by `import dot`. Exposed so tests can assert the
+    // bundled default template defines them (avoiding string drift between
+    // production code and the mapper⇄KB invariant test).
+    internal const string ForwardFlowTypeId = "SE.DF.TMCore.Request";
+    internal const string ReverseFlowTypeId = "SE.DF.TMCore.Response";
+    internal const string GenericFlowTypeId = "GE.DF";
+
     internal static Command Create()
     {
         var importCmd = new Command("import", "Import from external formats.");
@@ -18,7 +25,7 @@ internal static class ImportCommand
     {
         var dotFileArg = new Argument<FileInfo>("dotfile") { Description = "Path to the .dot file." };
         var outputOpt = new Option<FileInfo>("--output") { Description = "Output .tm7 file path.", Required = true };
-        var templateOpt = new Option<FileInfo>("--template") { Description = "Template .tm7 file for KB.", Required = true };
+        var templateOpt = new Option<FileInfo?>("--template") { Description = "Template .tm7 file for KB. If omitted, the bundled Azure Threat Model template is used." };
 
         var cmd = new Command("dot", "Import a Graphviz DOT file into a TM7 model.") { dotFileArg, outputOpt, templateOpt };
 
@@ -26,14 +33,16 @@ internal static class ImportCommand
         {
             var dotFile = parseResult.GetValue(dotFileArg)!;
             var outputFile = parseResult.GetValue(outputOpt)!;
-            var templateFile = parseResult.GetValue(templateOpt)!;
+            var templateFile = parseResult.GetValue(templateOpt);
 
             // 1. Parse DOT
             var dotGraph = DotParser.Parse(dotFile.FullName);
             AnsiConsole.MarkupLine($"[blue]Parsed DOT:[/] {dotGraph.Entities.Count} entities, {dotGraph.Edges.Count} edges, {dotGraph.Boundaries.Count} boundaries");
 
             // 2. Load template for KB
-            var template = Tm7File.Load(templateFile.FullName);
+            var template = templateFile is null
+                ? Tm7File.LoadDefaultTemplate()
+                : Tm7File.Load(templateFile.FullName);
 
             // 3. Build entity GUID map
             var entityGuids = new Dictionary<string, Guid>();
@@ -152,7 +161,7 @@ internal static class ImportCommand
                 var fwdGuid = Guid.NewGuid();
                 var fwdProps = CommandHelpers.CreateFlowProperties(flowLabel);
                 flowLines.Add(new SerializableConnector(
-                    fwdGuid, "SE.DF.TMCore.Request", "GE.DF", fwdProps,
+                    fwdGuid, ForwardFlowTypeId, GenericFlowTypeId, fwdProps,
                     tgtGuid, srcGuid,
                     tgtPort, srcPort,
                     srcX, srcY, tgtX, tgtY, handleX, handleY,
@@ -172,7 +181,7 @@ internal static class ImportCommand
                     int revHandleX = (revSrcX + revTgtX) / 2;
                     int revHandleY = (revSrcY + revTgtY) / 2 + 15; // slight offset so labels don't overlap
                     flowLines.Add(new SerializableConnector(
-                        revGuid, "SE.DF.TMCore.Response", "GE.DF", revProps,
+                        revGuid, ReverseFlowTypeId, GenericFlowTypeId, revProps,
                         srcGuid, tgtGuid,
                         revTgtPort, revSrcPort,
                         revSrcX, revSrcY, revTgtX, revTgtY, revHandleX, revHandleY,
@@ -212,7 +221,11 @@ internal static class ImportCommand
 
             Tm7File.Save(newModel, outputFile.FullName);
 
-            AnsiConsole.MarkupLine($"[green]Imported[/] {Markup.Escape(outputFile.FullName)}");
+            var kbName = template.KnowledgeBase.Manifest?.Name;
+            var templateLabel = templateFile is null
+                ? (string.IsNullOrEmpty(kbName) ? "bundled default template" : $"bundled default template: {kbName}")
+                : templateFile.Name;
+            AnsiConsole.MarkupLine($"[green]Imported[/] {Markup.Escape(outputFile.FullName)} [dim](KB: {Markup.Escape(templateLabel)})[/]");
             AnsiConsole.MarkupLine($"  Entities: {borders.Count} ({externalEntities.Count} external, {internalEntities.Count} internal, {dotGraph.Boundaries.Count} boundaries)");
             AnsiConsole.MarkupLine($"  Flows: {flowLines.Count}");
         });
